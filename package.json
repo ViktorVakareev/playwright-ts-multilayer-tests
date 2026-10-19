@@ -1,0 +1,33 @@
+{
+  "name": "playwright-ts-multilayer-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Multi-layer test automation with Playwright Test and TypeScript: API, PostgreSQL validation, UI and end-to-end tests for a service request -> approval -> invoice workflow.",
+  "type": "module",
+  "scripts": {
+    "start:app": "tsx app/server.ts",
+    "db:reset": "tsx scripts/reset-db.ts",
+    "test": "playwright test",
+    "test:api": "playwright test --project=api",
+    "test:ui": "playwright test --project=ui",
+    "test:smoke": "playwright test --grep @smoke",
+    "test:headed": "playwright test --project=ui --headed",
+    "report": "playwright show-report",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "express": "5.1.0",
+    "pg": "8.16.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/express": "5.0.3",
+    "@types/node": "22.18.0",
+    "@types/pg": "8.15.5",
+    "tsx": "4.20.5",
+    "typescript": "5.9.2"
+  }
+}

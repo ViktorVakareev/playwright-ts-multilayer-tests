@@ -1,0 +1,52 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 2 * * 1-5"   # nightly regression, 02:00 UTC Mon-Fri
+  workflow_dispatch:
+
+jobs:
+  playwright:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: servicedesk
+          POSTGRES_USER: qa
+          POSTGRES_PASSWORD: qa      # throwaway CI database; use secrets for anything real
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U qa -d servicedesk"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      CI: true
+      DATABASE_URL: postgres://qa:qa@localhost:5432/servicedesk
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npx playwright install --with-deps chromium
+      # Pull requests get the smoke subset; main and nightly get everything.
+      - name: Run tests
+        run: npx playwright test ${{ github.event_name == 'pull_request' && '--grep @smoke' || '' }}
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: traces-and-screenshots
+          path: test-results/
+          retention-days: 14
